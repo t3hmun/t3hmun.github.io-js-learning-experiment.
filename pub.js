@@ -17,17 +17,22 @@ const path = require('path');
 const fs = require('fs');
 
 // The following config should should mostly be loaded from json.
+var procMarkdown = {
+    proc: function(input) {
+        return mdit.render(input);
+    },
+    outExt: '.html'
+}
 
-var outputDirs = ["./t3hmun.github.io"];
-
-function procMarkdown(input) {
-    return mdit.render(input);
+var procHtml = {
+    proc: function(input) {
+        return input
+    },
+    outExt: '.html'
 }
 
 /** Process HTML (TODO: add minifier). */
-function procHtml(input) {
-    return input;
-}
+
 
 /** @type {Object} Standard set of file exts and methods to process them. */
 var fileProcessors = {
@@ -43,7 +48,7 @@ function fatalError(message, err) {
 
 var contentDirs = [{
     dir: "./content",
-    outDir: "./output",
+    outDir: "./t3hmun.github.io",
     processors: fileProcessors
 }];
 
@@ -76,18 +81,26 @@ function procFiles(dircfg, files, dirLen) {
                     return;
                 }
                 console.log(data);
-                var output = proc(data);
+                var output = proc.proc(data);
 
                 // Splice the right part of file path with the output dir.
                 var rightOfDir = filePath.slice(dirLen);
-                var target = path.join(dircfg.outDir, rightOfDir);
+                var tgtInfo = path.parse(path.join(dircfg.outDir, rightOfDir));
 
+                // Change extentsion.
+                var target = path.format({
+                    root: tgtInfo.root,
+                    dir: tgtInfo.dir,
+                    // not base, it has the wrong extension.
+                    ext: proc.outExt,
+                    name: tgtInfo.name
+                });
 
                 // Use stat to check if dir exists
-                var targetDir = path.parse(target).dir;
+                var targetDir = tgtInfo.dir;
                 fs.stat(targetDir, function(err, stat) {
                     if (err) {
-                        // Create dir on 'not exists' error.
+                        // Create dir if 'not exists' error.
                         if (err.code == 'ENOENT') {
                             fs.mkdir(targetDir, function(err) {
                                 if (err) {
