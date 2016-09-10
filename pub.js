@@ -16,7 +16,6 @@ const walk = require('t3hmun-walk');
 const path = require('path');
 const fs = require('fs');
 
-// The following config should should mostly be loaded from json.
 var procMarkdown = {
     proc: function(input) {
         return mdit.render(input);
@@ -30,9 +29,6 @@ var procHtml = {
     },
     outExt: '.html'
 }
-
-/** Process HTML (TODO: add minifier). */
-
 
 /** @type {Object} Standard set of file exts and methods to process them. */
 var fileProcessors = {
