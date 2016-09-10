@@ -2,11 +2,14 @@
  * It's not as pretty as I imagined but it is not hard to understand.
  */
 var template = module.exports = function(site, page){
+
 	var navitems = '';
 	site.nav.forEach(function(item){
 		navitems +=`<span class="navitem">${item}</span>`;
 	});
+
 	var head = head(site, page);
+	
 	return`<!DOCTYPE html>
 <html lang="en-GB">
 ${head}
@@ -33,8 +36,6 @@ ${head}
 </body>
 </html>`;
 }
-
-console.log(template('', 'hello', 't3hmun', 'text goes here.', ['a', 'b']));
 
 var head = function(site, page){
 	return `<head>
