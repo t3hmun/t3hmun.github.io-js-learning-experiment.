@@ -43,69 +43,98 @@ function fatalError(message, err) {
 
 var contentDirs = [{
     dir: "./content",
-    outdir: "./output",
+    outDir: "./output",
     processors: fileProcessors
 }];
 
 
 contentDirs.forEach(function(dircfg) {
     // Resolve a full path, a relative dir would be hard to change to output.
-    var cleandir = path.resolve(dircfg.dir);
-    var dirlen = cleandir.length;
+    var cleanDir = path.resolve(dircfg.dir);
+    var dirLen = cleanDir.length;
     // Get a flat list of all the files in the dir and subdirs.
-    walk(cleandir, function(err, files) {
-        var walkpromises = [];
+    walk(cleanDir, function(err, files) {
         if (err) fatalError(err);
-        files.forEach(function(filePath) {
-            var info = path.parse(filePath);
-            var proc = dircfg.processors[info.ext];
-            // Process if there is a processor defined otherwise ignore.
-
-            //console.log(filePath);
-            //console.log(proc);
-            //console.log(dircfg);
-
-            if (proc) {
-                walkpromises.push(new Promise(function(resolve, reject) {
-                    fs.readFile(filePath, 'utf-8', function(err, data) {
-                        if (err) {
-                            reject(err);
-                            return;
-                        }
-                        console.log(data);
-                        var output = proc(data);
-                        // Remove upto and including the root dir of the walk.
-                        var rightOfDir = filePath.slice(dirlen);
-                        var target = path.join(dircfg.outdir, rightOfDir);
-                        fs.writeFile(target, output, 'utf-8', function(err) {
-                            if (err) {
-                                reject(err);
-                                return;
-                            };
-                            // End of callback chain, yay (file written).
-                            resolve();
-                        });
-                    });
-                }));
-            }
-        });
-
-        console.log('promises' + walkpromises);
-        Promise.all(walkpromises).then(function() {
-            console.log("Publish completed successfully.");
-        }, function(err) {
-            // May want to make some errors not fatal in future?
-            console('file related error');
-            fatalError(err);
-        }).catch(function(err) {
-            // This catches the errors that 'should never happen'.
-            console.log("Unexpected error.");
-            fatalError(err);
-        }).catch(function(err) {
-            // This catches the errors that 'should never happen'.
-            console.log("A very Unexpected error.");
-            fatalError(err);
-        });
+        procFiles(dircfg, files, dirLen);
     });
 
 });
+
+
+function procFiles(dircfg, files, dirLen) {
+    var promises = [];
+    files.forEach(function(filePath) {
+        var info = path.parse(filePath);
+        var proc = dircfg.processors[info.ext];
+        // Ignore file if no processor defined for its extension.
+        if (!proc) return;
+
+        promises.push(new Promise(function(resolve, reject) {
+            fs.readFile(filePath, 'utf-8', function(err, data) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                console.log(data);
+                var output = proc(data);
+
+                // Splice the right part of file path with the output dir.
+                var rightOfDir = filePath.slice(dirLen);
+                var target = path.join(dircfg.outDir, rightOfDir);
+
+
+                // Use stat to check if dir exists
+                var targetDir = path.parse(target).dir;
+                fs.stat(targetDir, function(err, stat) {
+                    if (err) {
+                        // Create dir on 'not exists' error.
+                        if (err.code == 'ENOENT') {
+                            fs.mkdir(targetDir, function(err) {
+                                if (err) {
+                                    reject(err);
+                                    return;
+                                }
+                            });
+                        }
+                        // Other errors are a failure condition.
+                        else {
+                            reject(err);
+                            return;
+                        }
+                    }
+
+                    // Finally, write the output file.
+                    fs.writeFile(target, output, 'utf-8', function(err) {
+                        if (err) {
+                            reject(err);
+                            return;
+                        };
+                        // End of callback chain, yay (file written).
+                        resolve();
+                    });
+                });
+            });
+        }));
+    });
+
+    console.log('promises' + promises);
+    Promise.all(promises).then(function() {
+        console.log("Publish completed successfully.");
+    }, function(err) {
+        // May want to make some errors not fatal in future?
+        console.log('file related error');
+        fatalError(err);
+    }).catch(function(err) {
+        // This catches the errors that 'should never happen'.
+        console.log("Unexpected error.");
+        fatalError(err);
+    }).catch(function(err) {
+        // This catches the errors that 'should never happen'.
+        console.log("A very Unexpected error.");
+        fatalError(err);
+    }).catch(function(err) {
+        // This catches the errors that 'should never happen'.
+        console.log("I should probbly read up on what this actually does.");
+        fatalError(err);
+    });
+}
