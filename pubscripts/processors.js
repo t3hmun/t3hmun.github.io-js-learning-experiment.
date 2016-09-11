@@ -1,6 +1,5 @@
 "use strict";
 
-const help = require('./helper.js');
 
 const markdownItOptions = {
     highlight: function(str, lang) {
@@ -19,16 +18,16 @@ const markdownIt = require('markdown-it')(markdownItOptions);
 const path = require('path');
 const fs = require('fs');
 
-var markdown = {
+var markdown = exports.markdown = {
     proc: function(input) {
         return markdownIt.render(input);
     },
     outExt: '.html'
-}
+};
 
-var html = {
+var html = exports.html = {
     proc: function(input) {
         return input
     },
     outExt: '.html'
-}
+};

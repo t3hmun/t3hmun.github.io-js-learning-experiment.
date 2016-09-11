@@ -1,39 +1,13 @@
-const mditOptions = {
-    highlight: function(str, lang) {
-        if (lang && hljs.getLanguage(lang)) {
-            try {
-                return hljs.highlight(lang, str).value;
-            } catch (__) {}
-        }
-
-        return ''; // use external default escaping
-    }
-};
-
-const hljs = require('highlight.js');
-const mdit = require('markdown-it')(mditOptions);
 const walk = require('t3hmun-walk');
 const path = require('path');
 const fs = require('fs');
-
-var procMarkdown = {
-    proc: function(input) {
-        return mdit.render(input);
-    },
-    outExt: '.html'
-}
-
-var procHtml = {
-    proc: function(input) {
-        return input
-    },
-    outExt: '.html'
-}
+const processors = require('./pubscripts/processors');
+const help = require('./pubscripts/helper');
 
 /** @type {Object} Standard set of file exts and methods to process them. */
 var fileProcessors = {
-    ".md": procMarkdown,
-    ".html": procHtml
+    ".md": processors.markdown,
+    ".html": processors.html
 };
 
 /** Log then crash. */
@@ -44,19 +18,19 @@ function fatalError(message, err) {
 
 var contentDirs = [{
     dir: "./content",
-    outDir: "./t3hmun.github.io",
+    outDir: './t3hmun.github.io',
     processors: fileProcessors
 }];
 
 
-contentDirs.forEach(function(dircfg) {
+contentDirs.forEach(function(dirConfig) {
     // Resolve a full path, a relative dir would be hard to change to output.
-    var cleanDir = path.resolve(dircfg.dir);
+    var cleanDir = path.resolve(dirConfig.dir);
     var dirLen = cleanDir.length;
-    // Get a flat list of all the files in the dir and subdirs.
+    // Get a flat list of all the files in the dir and subdirectories.
     walk(cleanDir, function(err, files) {
         if (err) fatalError(err);
-        procFiles(dircfg, files, dirLen);
+        procFiles(dirConfig, files, dirLen);
     });
 
 });
@@ -81,26 +55,22 @@ function procFiles(dircfg, files, dirLen) {
 
                 // Splice the right part of file path with the output dir.
                 var rightOfDir = filePath.slice(dirLen);
-                var tgtInfo = path.parse(path.join(dircfg.outDir, rightOfDir));
+                var targetWrongExt = path.join(dircfg.outDir, rightOfDir);
 
-                // Change extentsion.
-                var target = path.format({
-                    root: tgtInfo.root,
-                    dir: tgtInfo.dir,
-                    // not base, it has the wrong extension.
-                    ext: proc.outExt,
-                    name: tgtInfo.name
-                });
+                // Change extension.
+                var target = help.changeExtension(targetWrongExt, proc.outExt);
+                var tgtInfo = path.parse(target);
 
                 // Use stat to check if dir exists
                 var targetDir = tgtInfo.dir;
-                fs.stat(targetDir, function(err, stat) {
+                fs.stat(targetDir, function (err) {
                     if (err) {
                         // Create dir if 'not exists' error.
                         if (err.code == 'ENOENT') {
                             fs.mkdir(targetDir, function(err) {
                                 if (err) {
                                     reject(err);
+                                    //noinspection UnnecessaryReturnStatementJS
                                     return;
                                 }
                             });
@@ -117,7 +87,7 @@ function procFiles(dircfg, files, dirLen) {
                         if (err) {
                             reject(err);
                             return;
-                        };
+                        }
                         // End of callback chain, yay (file written).
                         resolve();
                     });
