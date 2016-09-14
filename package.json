@@ -3,6 +3,6 @@
     "highlight.js": "^9.6.0",
     "highlightjs": "^8.7.0",
     "markdown-it": "^7.0.1",
-    "t3hmun-walk": "^1.0.1"
+    "t3hmun-walk": "^2.0.0"
   }
 }

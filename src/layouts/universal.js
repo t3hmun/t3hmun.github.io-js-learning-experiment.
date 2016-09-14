@@ -1,16 +1,13 @@
 /** Templating without using any libries with exotic styles of markup.
  * It's not as pretty as I imagined but it is not hard to understand.
  */
-var template = module.exports = function(site, page){
-
-	var navitems = '';
-	site.nav.forEach(function(item){
-		navitems +=`<span class="navitem">${item}</span>`;
-	});
-
-	var head = head(site, page);
-	
-	return`<!DOCTYPE html>
+var template = module.exports = function (site, page) {
+    var navitems = '';
+    site.nav.forEach(function (item) {
+        navitems += `<span class="navitem">${item}</span>`;
+    });
+    var head = head(site, page);
+    return `<!DOCTYPE html>
 <html lang="en-GB">
 ${head}
 <body>
@@ -35,10 +32,9 @@ ${head}
     </footer>
 </body>
 </html>`;
-}
-
-var head = function(site, page){
-	return `<head>
+};
+var head = function (site, page) {
+    return `<head>
 <meta charset="utf-8">
 <!-- Suppress Internet Explorer's compatibility mode minimise quirks. -->
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
