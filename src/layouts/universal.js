@@ -1,7 +1,7 @@
-/** Templating without using any libries with exotic styles of markup.
+/** Templating without using any libraries with exotic styles of markup.
  * It's not as pretty as I imagined but it is not hard to understand.
  */
-var template = module.exports = function (site, page) {
+var template = module.exports = function (site, page, content) {
     var navitems = '';
     site.nav.forEach(function (item) {
         navitems += `<span class="navitem">${item}</span>`;
@@ -23,7 +23,7 @@ ${head}
       </nav>
     </header>
     <main>
-      ${page.content}
+      ${content}
     </main>
     <footer>
       <div class="footer">

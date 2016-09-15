@@ -8,9 +8,11 @@ const pubDir = '../t3hmun.github.io';
 
 const topLevelConfig = {
     dir : '../site',
-    dirPredicate: ()=>false, // No recursion
-    filePredicate: ()=> true,
-    processors:{
+    dirPredicate: (_)=>true,
+    filePredicate: (filePath)=>filePath.endsWith('.md')||filePath.endsWith('.html'),
+    process: (file)=>{
 
     }
+
+
 };

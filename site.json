@@ -1,5 +1,8 @@
 {
-	"title": "t3hmun",
-	"baseurl": "t3hmun.github.io/",
-	"description": "t3hmun's web log."
+  "title": "t3hmun",
+  "baseurl": "t3hmun.github.io/",
+  "description": "t3hmun's web log.",
+  "nav": [
+    "index"
+  ]
 }

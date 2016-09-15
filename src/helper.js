@@ -5,42 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const walk = require('t3hmun-walk');
 
-module.exports.splitJsonAndFile = splitJsonAndFile;
 module.exports.changeExtension = changeExtension;
 module.exports.readFiles = readFiles;
-
-interface FileAndJson {
-    file: string,
-    json: {}
-}
-
-/**
- * Splits the Json front-matter from the rest of the file, returns both parts.
- * @param fileContents - The contents of a file with Json front-matter.
- * @returns Separated file and json.
- */
-function splitJsonAndFile(fileContents: string): FileAndJson {
-    let prev = '';
-    let open = 0;
-    let close = 0;
-    let end;
-    for (let i = 0, len = fileContents.length; i < len; i++) {
-        let current = fileContents[i];
-        if (current == "{" && prev != '\\')
-            open++;
-        if (current == "}" && prev != '\\')
-            close++;
-        if (open == close) {
-            end = i;
-            break;
-        }
-        prev = current;
-    }
-    return {
-        file: fileContents.slice(end + 1),
-        json: JSON.parse(fileContents.substring(0, end))
-    };
-}
 
 /**
  * Changes the extension on a file.
