@@ -12,6 +12,7 @@ const markdownItOptions = {
         return ''; // use external default escaping
     }
 };
+
 const highlightJs = require('highlight.js');
 const markdownIt = require('markdown-it')(markdownItOptions);
 const path = require('path');
@@ -20,16 +21,30 @@ const helpers = require('./helper');
 
 interface FileWithConfig {
     inPath: string,
-    outPath: ?string,
+    outPath?: string,
     data: string,
-    ext: ?string,
-    fileConfig: ?FileConfig,
-    dirConfig: ?{},
-    siteConfig: ?{}
+    ext?: string,
+    fileConfig?: FileConfig,
+    groupConfig?: GroupConfig,
+    siteConfig?: SiteConfig
 }
 
 interface FileConfig {
-    layout: string
+    layout?: string
+}
+interface SiteConfig {
+    title: string,
+    baseUrl: string,
+    description: string,
+    nav: string[]
+}
+
+interface GroupConfig {
+    inDir: string,
+    outDir:string,
+    filePredicate: (filePath: string)=>boolean,
+    dirPredicate: (dirPath: string)=>boolean,
+    proc: (filePath: string, data: string, groupConfig: GroupConfig, siteConfig: SiteConfig)=>Promise<void>
 }
 
 exports.markdownToHtml = function (file: FileWithConfig): Promise<FileWithConfig> {
@@ -91,14 +106,47 @@ module.exports.extractJsonFrontMatter = function (file: FileWithConfig): Promise
 };
 
 module.exports.writeFile = function (file: FileWithConfig): Promise<FileWithConfig> {
+    let groupConfig = file.groupConfig;
+    if (!groupConfig) return Promise.reject(new Error('Group config missing cant write file without in/out dir.'));
     let ext = file.ext;
-    if (!ext) return Promise.reject('No file.ext defined, process step missing: ' + file.inPath);
-    let outPath = helpers.changeExtension(file.inPath, ext);
+    if (!ext) return Promise.reject(new Error('No file.ext defined, process step missing: ' + file.inPath));
+    let extChanged = helpers.changeExtension(file.inPath, ext);
+    let outPath = helpers.changePath(groupConfig.inDir, groupConfig.outDir, extChanged);
+    let outFileDir = path.parse(outPath).dir;
     file.outPath = outPath;
     return new Promise((resolve, reject)=> {
-        fs.writeFile(outPath, file.data, 'utf-8', (err)=> {
+        helpers.ensureDirCreated(outFileDir, (err)=> {
             if (err) reject(err);
-            else resolve(file);
+            else {
+                fs.writeFile(outPath, file.data, 'utf-8', (err)=> {
+                    if (err) reject(err);
+                    else resolve(file);
+                });
+            }
+        });
+    });
+};
+
+module.exports.processGroup = function (groupConfig: GroupConfig, siteConfig: SiteConfig): Promise<void> {
+    return new Promise((resolve, reject)=> {
+        helpers.readFiles(groupConfig.inDir, groupConfig.filePredicate, groupConfig.dirPredicate, (err, files)=> {
+            if (err) {
+                reject(err);
+                return;
+            }
+            if (!files) throw Error('readfile broken.');
+
+            let promises: Promise<void>[] = [];
+            files.forEach((file)=> {
+                promises.push(groupConfig.proc(file.inPath, file.data, groupConfig, siteConfig));
+            });
+
+            Promise.all(promises).then(()=> {
+                console.log('Group', groupConfig, 'processed successfully.');
+            }).catch((err)=> {
+                console.log('Group', groupConfig, 'failed to process:');
+                throw err;
+            });
         });
     });
 };

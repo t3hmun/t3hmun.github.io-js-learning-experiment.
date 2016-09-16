@@ -1,7 +1,7 @@
 /** Templating without using any libraries with exotic styles of markup.
  * It's not as pretty as I imagined but it is not hard to understand.
  */
-var template = module.exports = function (site, page, content) {
+module.exports = function (site, page, content) {
     var navitems = '';
     site.nav.forEach(function (item) {
         navitems += `<span class="navitem">${item}</span>`;
@@ -47,11 +47,11 @@ The design of the site must be suitable for this kind of wrapping in a smaller s
 <!-- Title used by the browser and also by search engines and non-humans. -->
 <title>${page.title}</title>
 <!-- The root relative url for the stylesheet. -->
-<link id="maincss" rel="stylesheet" href="${site.baseurl}/css/main.css">
+<link id="maincss" rel="stylesheet" href="${site.baseUrl}/css/main.css">
 <!-- The preferred URL for the page. Useful when there are multiple possible urls. -->
-<link rel="canonical" href="${site.baseurl}${page.url.replace('index.html', '')}">
+<link rel="canonical" href="${site.baseUrl}${page.url.replace('index.html', '')}">
 <!-- Handy link to the RSS for the site for browsers and non-humans. -->
-<link rel="alternate" type="application/rss+xml" title="${site.title}" href="${site.baseurl}/feed.xml" />
-<script src="${site.baseurl}/js/theme.js"></script>
+<link rel="alternate" type="application/rss+xml" title="${site.title}" href="${site.baseUrl}/feed.xml" />
+<script src="${site.baseUrl}/js/theme.js"></script>
 </head>`;
 };

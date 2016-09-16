@@ -7,6 +7,8 @@ const walk = require('t3hmun-walk');
 
 module.exports.changeExtension = changeExtension;
 module.exports.readFiles = readFiles;
+module.exports.changePath = changePath;
+module.exports.ensureDirCreated = ensureDirCreated;
 
 /**
  * Changes the extension on a file.
@@ -26,12 +28,12 @@ function changeExtension(filePath: string, extension: string): string {
     });
 }
 
-interface DataConfig {
+interface DataAndPath {
     data: string,
-    config : any
+    inPath : string
 }
 
-type ReadFilesCallback = (err: ?Error, files: ?any) => void;
+type ReadFilesCallback = (err: ?Error, files: ?DataAndPath[]) => void;
 
 /**
  * Reads all files selected by filePredicated in dir and all sub-dirs selected by dirPredicate.
@@ -40,13 +42,13 @@ type ReadFilesCallback = (err: ?Error, files: ?any) => void;
  * @param {function(string): boolean} dirPredicate - Function that returns true on directory paths that should be included. Sub-dirs of excluded dirs are always excluded.
  * @param {function(Error, object[])} callback
  */
-function readFiles(dirPath: string, filePredicate: string, dirPredicate: string, callback: ReadFilesCallback) {
+function readFiles(dirPath: string, filePredicate: (filePath: string)=>boolean, dirPredicate: (filePath: string)=>boolean, callback: ReadFilesCallback) {
     walk.where(dirPath, filePredicate, dirPredicate, (err, files) => {
         if (err) {
             callback(err, null);
             return;
         }
-        let promises: Promise<DataConfig>[] = [];
+        let promises: Promise<DataAndPath>[] = [];
         files.forEach(filePath => {
             return promises.push(new Promise((resolve, reject) => {
                 fs.readFile(filePath, 'utf-8', (err, data) => {
@@ -54,10 +56,41 @@ function readFiles(dirPath: string, filePredicate: string, dirPredicate: string,
                         reject(err);
                         return;
                     }
-                    resolve({data: data, config: {inPath: filePath}});
+                    resolve({data: data, inPath: filePath});
                 });
             }));
         });
         Promise.all(promises).then(values => callback(null, values), err => callback(err, null));
+    });
+}
+
+function changePath(inRootDir: string, outRootDir: string, filePath: string) {
+    // Resolving in-case the function was called with a mixture of relative and absolute paths.
+    let fullInDir = path.resolve(inRootDir);
+    let fullFilePath = path.resolve(filePath);
+    let filePathStub = fullFilePath.slice(fullInDir.length);
+    // This will create a relative path if outRootDir is relative.
+    return path.join(outRootDir, filePathStub);
+}
+
+function ensureDirCreated(dirPath: string, callback: (err: ?Error)=>void) {
+    fs.stat(dirPath, (err)=> {
+        if (err) {
+            if (err.code == 'ENOENT') {
+                fs.mkdir(dirPath, 666, (err)=> {
+                    if (err) {
+                        callback(err);
+                    }
+                    else {
+                        callback(null);
+                    }
+                });
+            } else {
+                callback(err);
+            }
+        }
+        else {
+            callback(null);
+        }
     });
 }
