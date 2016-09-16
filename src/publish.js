@@ -16,6 +16,7 @@ const site = {
 };
 
 const contentGroup = {
+    name: 'md and html content',
     inDir: contentDir,
     outDir: pubDir,
     filePredicate: (filePath)=>filePath.endsWith('.md') || filePath.endsWith('.html'),

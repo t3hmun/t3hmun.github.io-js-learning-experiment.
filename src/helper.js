@@ -43,14 +43,16 @@ type ReadFilesCallback = (err: ?Error, files: ?DataAndPath[]) => void;
  * @param {function(Error, object[])} callback
  */
 function readFiles(dirPath: string, filePredicate: (filePath: string)=>boolean, dirPredicate: (filePath: string)=>boolean, callback: ReadFilesCallback) {
-    walk.where(dirPath, filePredicate, dirPredicate, (err, files) => {
+    // The order of the predicates has flipped. Terrible mess.
+    walk.where(dirPath, dirPredicate, filePredicate, (err, files) => {
         if (err) {
             callback(err, null);
             return;
         }
+        console.log(files);
         let promises: Promise<DataAndPath>[] = [];
         files.forEach(filePath => {
-            return promises.push(new Promise((resolve, reject) => {
+            promises.push(new Promise((resolve, reject) => {
                 fs.readFile(filePath, 'utf-8', (err, data) => {
                     if (err) {
                         reject(err);

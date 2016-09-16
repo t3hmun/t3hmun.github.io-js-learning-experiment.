@@ -40,6 +40,7 @@ interface SiteConfig {
 }
 
 interface GroupConfig {
+    name: string,
     inDir: string,
     outDir:string,
     filePredicate: (filePath: string)=>boolean,
@@ -135,7 +136,6 @@ module.exports.processGroup = function (groupConfig: GroupConfig, siteConfig: Si
                 return;
             }
             if (!files) throw Error('readfile broken.');
-
             let promises: Promise<void>[] = [];
             files.forEach((file)=> {
                 promises.push(groupConfig.proc(file.inPath, file.data, groupConfig, siteConfig));
