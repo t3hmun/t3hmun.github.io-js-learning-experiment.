@@ -2,7 +2,6 @@
 // @flow
 
 const path = require('path');
-const helpers = require('./helper');
 const processors = require('./processors');
 const layouts = {universal: require('./layouts/universal')};
 const pubDir = '../t3hmun.github.io';

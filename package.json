@@ -4,5 +4,8 @@
     "highlightjs": "^8.7.0",
     "markdown-it": "^7.0.1",
     "t3hmun-walk": "^2.0.0"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-flow-strip-types": "^6.14.0"
   }
 }
