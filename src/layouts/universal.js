@@ -6,7 +6,7 @@ module.exports = function (site, page, content) {
     site.nav.forEach(function (item) {
         navitems += `<span class="navitem">${item}</span>`;
     });
-    var head = head(site, page);
+    var head = generateHead(site, page);
     return `<!DOCTYPE html>
 <html lang="en-GB">
 ${head}
@@ -33,7 +33,8 @@ ${head}
 </body>
 </html>`;
 };
-var head = function (site, page) {
+
+function generateHead (site, page) {
     return `<head>
 <meta charset="utf-8">
 <!-- Suppress Internet Explorer's compatibility mode minimise quirks. -->
@@ -54,4 +55,4 @@ The design of the site must be suitable for this kind of wrapping in a smaller s
 <link rel="alternate" type="application/rss+xml" title="${site.title}" href="${site.baseUrl}/feed.xml" />
 <script src="${site.baseUrl}/js/theme.js"></script>
 </head>`;
-};
+}

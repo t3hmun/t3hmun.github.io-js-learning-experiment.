@@ -9,6 +9,7 @@ module.exports.changeExtension = changeExtension;
 module.exports.readFiles = readFiles;
 module.exports.changePath = changePath;
 module.exports.ensureDirCreated = ensureDirCreated;
+module.exports.removeBasePath = removeBasePath;
 
 /**
  * Changes the extension on a file.
@@ -95,4 +96,11 @@ function ensureDirCreated(dirPath: string, callback: (err: ?Error)=>void) {
             callback(null);
         }
     });
+
+}
+
+function removeBasePath(filePath: string, basePath: string) {
+    let fullFilePath = path.resolve(filePath);
+    let fullBasePath = path.resolve(basePath);
+    return fullFilePath.slice(fullBasePath.length + 1);
 }

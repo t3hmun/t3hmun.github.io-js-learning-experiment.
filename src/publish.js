@@ -20,8 +20,9 @@ const site = {
 // Config to process html and md content.
 const contentGroup = {
     name: 'md and html content',
-    inDir: contentDir,
-    outDir: pubDir,
+    inDir: contentDir, // Process files from
+    outDir: pubDir, // Write files to
+    relUrl: '', // The URL is relative to (inDir could be a sub-dir that should map to a sub-path).
     filePredicate: (filePath)=>filePath.endsWith('.md') || filePath.endsWith('.html'),
     dirPredicate: (dirPath)=>true,
     proc: processContent
@@ -53,10 +54,12 @@ function processContent(filePath: string, data: string, groupConfig, siteConfig)
             if (ext == '.html') return processors.htmlToHtml(file);
             return Promise.reject(new Error('Unexpected file extension:"' + ext + '": ', fileConfig));
         }).then((file)=> {
+            return processors.setUrlIfUndefined(file);
+        }).then((file)=> {
             return processors.applyTemplate(file, layouts);
         }).then((file)=> {
             return processors.writeFile(file);
-        }).then(()=>{
+        }).then(()=> {
             resolve();
         }).catch((err)=> {
             reject(err);

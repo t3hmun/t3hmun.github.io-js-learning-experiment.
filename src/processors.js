@@ -30,8 +30,11 @@ interface FileWithConfig {
 }
 
 interface FileConfig {
-    layout?: string
+    layout?: string,
+    url?: string,
+    description?: string
 }
+
 interface SiteConfig {
     title: string,
     baseUrl: string,
@@ -42,7 +45,8 @@ interface SiteConfig {
 interface GroupConfig {
     name: string,
     inDir: string,
-    outDir:string,
+    outDir: string,
+    relUrl: string,
     filePredicate: (filePath: string)=>boolean,
     dirPredicate: (dirPath: string)=>boolean,
     proc: (filePath: string, data: string, groupConfig: GroupConfig, siteConfig: SiteConfig)=>Promise<void>
@@ -69,13 +73,12 @@ exports.applyTemplate = function (file: FileWithConfig, templates: {}): Promise<
     if (!layoutName) return Promise.reject('File config has no layout: ' + file.inPath);
 
     let layout = templates[layoutName];
-    if (!layout) return Promise.reject('Template ' + layoutName + 'does not exist:' + file.inPath);
+    if (!layout) return Promise.reject('Template ' + layoutName + ' does not exist:' + file.inPath);
 
     file.data = layout(file.siteConfig, file.fileConfig, file.data);
 
     return Promise.resolve(file);
 };
-
 
 /**
  * Extracts the Json front-matter from the start of the file, adds it as config.
@@ -102,9 +105,31 @@ module.exports.extractJsonFrontMatter = function (file: FileWithConfig): Promise
     }
 
     file.data = data.slice(end + 1);
-    file.fileConfig = JSON.parse(data.substring(0, end));
-    console.log('hello');
+    let jsonStr = data.substring(0, end + 1);
+    try {
+        file.fileConfig = JSON.parse(jsonStr);
+    } catch (err) {
+        console.log('Json parse failed, input:\n', jsonStr);
+        return Promise.reject(err);
+    }
+
     return Promise.resolve(file);
+};
+
+module.exports.setUrlIfUndefined = function (file: FileWithConfig): Promise<FileWithConfig> {
+    let gc = file.groupConfig;
+    if (!gc) return Promise.reject(new Error('No group config set for file:' + file.inPath));
+    let inDir = gc.inDir;
+    let filePath = file.inPath;
+    let relUrl = gc.relUrl;
+    let relFilePath = helpers.removeBasePath(filePath, inDir);
+
+    let fc = file.fileConfig;
+    if (!fc) return Promise.reject(new Error('No file config set for file: ' + file.inPath));
+
+    fc.url = path.join(relUrl, relFilePath);
+    return Promise.resolve(file);
+
 };
 
 module.exports.writeFile = function (file: FileWithConfig): Promise<FileWithConfig> {
@@ -143,16 +168,12 @@ module.exports.processGroup = function (groupConfig: GroupConfig, siteConfig: Si
             let promises: Promise<void>[] = [];
 
             files.forEach((file)=> {
-                console.log('pre');
                 promises.push(groupConfig.proc(file.inPath, file.data, groupConfig, siteConfig));
-                console.log('post');
             });
 
             Promise.all(promises).then(()=> {
-                console.log('Group', groupConfig, 'processed successfully.');
                 resolve();
             }).catch((err)=> {
-                console.log('Group', groupConfig, 'failed to process:');
                 reject(err);
             });
         });
