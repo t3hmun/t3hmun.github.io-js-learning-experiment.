@@ -83,6 +83,8 @@ exports.applyTemplate = function (file: FileWithConfig, templates: {}): Promise<
  * @returns Modified file
  */
 module.exports.extractJsonFrontMatter = function (file: FileWithConfig): Promise<FileWithConfig> {
+    console.log('no?');
+    throw new Error('SRS');
     let prev = '';
     let open = 0;
     let close = 0;
@@ -103,6 +105,7 @@ module.exports.extractJsonFrontMatter = function (file: FileWithConfig): Promise
 
     file.data = data.slice(end + 1);
     file.fileConfig = JSON.parse(data.substring(0, end));
+    console.log('hello');
     return Promise.resolve(file);
 };
 
@@ -134,18 +137,25 @@ module.exports.processGroup = function (groupConfig: GroupConfig, siteConfig: Si
             if (err) {
                 reject(err);
                 return;
+            } else if (!files) {
+                reject(new Error('readfile broken.'));
+                return;
             }
-            if (!files) throw Error('readfile broken.');
+
             let promises: Promise<void>[] = [];
+
             files.forEach((file)=> {
+                console.log('pre');
                 promises.push(groupConfig.proc(file.inPath, file.data, groupConfig, siteConfig));
+                console.log('post');
             });
 
             Promise.all(promises).then(()=> {
                 console.log('Group', groupConfig, 'processed successfully.');
+                resolve();
             }).catch((err)=> {
                 console.log('Group', groupConfig, 'failed to process:');
-                throw err;
+                reject(err);
             });
         });
     });

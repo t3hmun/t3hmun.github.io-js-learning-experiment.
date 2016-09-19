@@ -49,7 +49,6 @@ function readFiles(dirPath: string, filePredicate: (filePath: string)=>boolean, 
             callback(err, null);
             return;
         }
-        console.log(files);
         let promises: Promise<DataAndPath>[] = [];
         files.forEach(filePath => {
             promises.push(new Promise((resolve, reject) => {
