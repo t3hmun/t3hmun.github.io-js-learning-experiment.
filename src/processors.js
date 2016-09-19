@@ -83,8 +83,6 @@ exports.applyTemplate = function (file: FileWithConfig, templates: {}): Promise<
  * @returns Modified file
  */
 module.exports.extractJsonFrontMatter = function (file: FileWithConfig): Promise<FileWithConfig> {
-    console.log('no?');
-    throw new Error('SRS');
     let prev = '';
     let open = 0;
     let close = 0;

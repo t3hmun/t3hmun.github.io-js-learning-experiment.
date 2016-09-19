@@ -51,15 +51,16 @@ function readFiles(dirPath: string, filePredicate: (filePath: string)=>boolean, 
         }
         let promises: Promise<DataAndPath>[] = [];
         files.forEach(filePath => {
-            promises.push(new Promise((resolve, reject) => {
-                fs.readFile(filePath, 'utf-8', (err, data) => {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-                    resolve({data: data, inPath: filePath});
-                });
-            }));
+            promises.push(
+                new Promise((resolve, reject) => {
+                    fs.readFile(filePath, 'utf-8', (err, data) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve({data: data, inPath: filePath});
+                    });
+                }));
         });
         Promise.all(promises).then(values => callback(null, values), err => callback(err, null));
     });

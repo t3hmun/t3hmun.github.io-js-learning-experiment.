@@ -17,6 +17,7 @@ const site = {
     ]
 };
 
+// Config to process html and md content.
 const contentGroup = {
     name: 'md and html content',
     inDir: contentDir,
@@ -33,9 +34,10 @@ processors.processGroup(contentGroup, site)
     .catch((err)=> {
         console.log('content group processing failed.');
         console.log(err);
-        // Crash program now.
+        // Kill program as result of error.
         process.exit();
     });
+
 
 function processContent(filePath: string, data: string, groupConfig, siteConfig): Promise<void> {
     let fileConfig = {
