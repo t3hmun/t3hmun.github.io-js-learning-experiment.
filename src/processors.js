@@ -19,52 +19,20 @@ const path = require('path');
 const fs = require('fs');
 const helpers = require('./helper');
 
-interface FileWithConfig {
-    inPath: string,
-    outPath?: string,
-    data: string,
-    ext?: string,
-    fileConfig?: FileConfig,
-    groupConfig?: GroupConfig,
-    siteConfig?: SiteConfig
-}
 
-interface FileConfig {
-    layout?: string,
-    url?: string,
-    description?: string
-}
-
-interface SiteConfig {
-    title: string,
-    baseUrl: string,
-    description: string,
-    nav: string[]
-}
-
-interface GroupConfig {
-    name: string,
-    inDir: string,
-    outDir: string,
-    relUrl: string,
-    filePredicate: (filePath: string)=>boolean,
-    dirPredicate: (dirPath: string)=>boolean,
-    proc: (filePath: string, data: string, groupConfig: GroupConfig, siteConfig: SiteConfig)=>Promise<void>
-}
-
-exports.markdownToHtml = function (file: FileWithConfig): Promise<FileWithConfig> {
+exports.markdownToHtml = function (file: SourceFile): Promise<SourceFile> {
     file.data = markdownIt.render(file.data);
-    file.ext = '.md';
+    file.ext = '.html';
     return Promise.resolve(file);
 };
 
-exports.htmlToHtml = function (file: FileWithConfig): Promise<FileWithConfig> {
+exports.htmlToHtml = function (file: SourceFile): Promise<SourceFile> {
     //Todo: something to minify or cleanup html?
     file.ext = '.html';
     return Promise.resolve(file);
 };
 
-exports.applyTemplate = function (file: FileWithConfig, templates: {}): Promise<FileWithConfig> {
+exports.applyTemplate = function (file: SourceFile, templates: {}): Promise<SourceFile> {
 
     let fileConfig = file.fileConfig;
     if (!fileConfig) return Promise.reject('No file config: ' + file.inPath);
@@ -75,8 +43,9 @@ exports.applyTemplate = function (file: FileWithConfig, templates: {}): Promise<
     let layout = templates[layoutName];
     if (!layout) return Promise.reject('Template ' + layoutName + ' does not exist:' + file.inPath);
 
-    file.data = layout(file.siteConfig, file.fileConfig, file.data);
-
+    let withLayout = layout(file, file.data);
+    if(withLayout instanceof Error) return Promise.reject(withLayout);
+    file.data = withLayout;
     return Promise.resolve(file);
 };
 
@@ -85,7 +54,7 @@ exports.applyTemplate = function (file: FileWithConfig, templates: {}): Promise<
  * @param file - The contents of a file with Json front-matter.
  * @returns Modified file
  */
-module.exports.extractJsonFrontMatter = function (file: FileWithConfig): Promise<FileWithConfig> {
+module.exports.extractJsonFrontMatter = function (file: SourceFile): Promise<SourceFile> {
     let prev = '';
     let open = 0;
     let close = 0;
@@ -116,7 +85,7 @@ module.exports.extractJsonFrontMatter = function (file: FileWithConfig): Promise
     return Promise.resolve(file);
 };
 
-module.exports.setUrlIfUndefined = function (file: FileWithConfig): Promise<FileWithConfig> {
+module.exports.setUrlIfUndefined = function (file: SourceFile): Promise<SourceFile> {
     let gc = file.groupConfig;
     if (!gc) return Promise.reject(new Error('No group config set for file:' + file.inPath));
     let inDir = gc.inDir;
@@ -132,7 +101,7 @@ module.exports.setUrlIfUndefined = function (file: FileWithConfig): Promise<File
 
 };
 
-module.exports.writeFile = function (file: FileWithConfig): Promise<FileWithConfig> {
+module.exports.writeFile = function (file: SourceFile): Promise<SourceFile> {
     let groupConfig = file.groupConfig;
     if (!groupConfig) return Promise.reject(new Error('Group config missing cant write file without in/out dir.'));
     let ext = file.ext;

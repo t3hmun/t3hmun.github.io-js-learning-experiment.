@@ -4,4 +4,6 @@
 
 [libs]
 
+src/decls/
+
 [options]

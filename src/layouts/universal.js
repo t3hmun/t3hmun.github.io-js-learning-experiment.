@@ -1,12 +1,28 @@
+// @flow
 /** Templating without using any libraries with exotic styles of markup.
  * It's not as pretty as I imagined but it is not hard to understand.
  */
-module.exports = function (site, page, content) {
+module.exports = function (file: SourceFile, content: string): string | Error {
+    let page = file.fileConfig;
+    let site = file.siteConfig;
+
+    // TODO: better interfaces or type hierarchy.
+    // This is poor use of flow. Instead this function should use an inherited type that requires these things.
+    // That way I guarantee that the right data is given to this.
+    // I'm just doing a dance to stop flow complaining, rather silly really.
+
+    if (!site) return new Error('Site config missing: ' + file.inPath);
+    if (!page) return new Error('Page config missing: ' + file.inPath);
+
+
     var navitems = '';
     site.nav.forEach(function (item) {
         navitems += `<span class="navitem">${item}</span>`;
     });
-    var head = generateHead(site, page);
+    var head = generateHead(file, site, page);
+
+    if(head instanceof Error) return head;
+
     return `<!DOCTYPE html>
 <html lang="en-GB">
 ${head}
@@ -34,7 +50,9 @@ ${head}
 </html>`;
 };
 
-function generateHead (site, page) {
+function generateHead(file, site, page) {
+    if (!page.url) return new Error('page.url missing: ' + file.inPath);
+    if (!page.title) return new Error('page.title missing:' + file.inPath);
     return `<head>
 <meta charset="utf-8">
 <!-- Suppress Internet Explorer's compatibility mode minimise quirks. -->

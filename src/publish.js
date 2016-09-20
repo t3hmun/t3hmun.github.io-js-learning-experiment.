@@ -3,7 +3,10 @@
 
 const path = require('path');
 const processors = require('./processors');
-const layouts = {universal: require('./layouts/universal')};
+const layouts = {
+    universal: require('./layouts/universal'),
+    post: require('./layouts/post')
+};
 
 // Following dirs rely on the script being run from the project root, not src.
 const pubDir = './t3hmun.github.io';
